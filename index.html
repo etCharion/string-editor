@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>String Editor - Editace textů v uvozovkách</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        header h1 {
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+            min-height: 500px;
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+        }
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        textarea, input[type="file"] {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            transition: border-color 0.3s;
+        }
+        textarea:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        #originalCode {
+            flex: 1;
+            resize: vertical;
+            min-height: 300px;
+            background: #f8f9fa;
+        }
+        #stringsList {
+            flex: 1;
+            overflow-y: auto;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .string-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .string-item label {
+            font-size: 12px;
+            color: #666;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .string-item .original {
+            grid-column: 1 / -1;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-left: 3px solid #667eea;
+        }
+        .string-item input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .string-item input:focus {
+            border-color: #667eea;
+            background: #fffef0;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #ddd;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .message.show {
+            display: block;
+        }
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .count-info {
+            text-align: center;
+            font-size: 14px;
+            color: #666;
+            margin: 15px 0;
+        }
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>String Editor</h1>
+            <p>Extrahuj texty z uvozovek a uprav je přímo v kódu</p>
+        </header>
+        
+        <div class="content">
+            <!-- Levý panel: nahrávání a originální kód -->
+            <div class="panel">
+                <h2>1 Nahraj kód</h2>
+                <input type="file" id="fileInput" accept=".js,.py,.java,.cpp,.cs,.ts,.jsx,.tsx,.json,.html,.css,.php,.rb,.go,.rs,.swift" />
+                <div class="count-info">
+                    Nalezeno stringů: <strong id="stringCount">0</strong>
+                </div>
+                <h2>Originální kód</h2>
+                <textarea id="originalCode" placeholder="Sem můžeš vložit kód nebo nahraht soubor..."></textarea>
+            </div>
+
+            <!-- Pravý panel: editace stringů -->
+            <div class="panel">
+                <h2>2 Uprav texty</h2>
+                <div id="stringsList"></div>
+            </div>
+        </div>
+
+        <!-- Tlačítka -->
+        <div class="controls">
+            <button class="btn-primary" onclick="processCode()">Najdi všechny stringy</button>
+            <button class="btn-success" onclick="applyChanges()">Aplikuj změny</button>
+            <button class="btn-warning" onclick="downloadCode()">Stáhni upravený kód</button>
+            <button class="btn-secondary" onclick="resetAll()">Reset</button>
+        </div>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        let originalStrings = [];
+        let modifiedStrings = [];
+        let processedCode = '';
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('originalCode').value = event.target.result;
+                    showMessage('Soubor nalozen. Klikni "Najdi všechny stringy".', 'info');
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function findStrings(code) {
+            const regex = /"(?:\\.|[^"\\])*"/g;
+            const matches = code.match(regex) || [];
+            return matches.map(match => match.slice(1, -1));
+        }
+
+        function processCode() {
+            const code = document.getElementById('originalCode').value;
+            
+            if (!code.trim()) {
+                showMessage('Prosím vloj nebo nahraj kód.', 'error');
+                return;
+            }
+
+            originalStrings = findStrings(code);
+            processedCode = code;
+
+            if (originalStrings.length === 0) {
+                showMessage('Nebyly nalezeny žádné stringy v uvozovkách.', 'error');
+                renderStringsList();
+                return;
+            }
+
+            modifiedStrings = [...originalStrings];
+            document.getElementById('stringCount').textContent = originalStrings.length;
+            renderStringsList();
+            showMessage(`Nalezeno ${originalStrings.length} stringů. Uprav je podle potřeby.`, 'success');
+        }
+
+        function renderStringsList() {
+            const container = document.getElementById('stringsList');
+            container.innerHTML = '';
+
+            if (originalStrings.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #999;">Zde se budou zobrazovat stringy...</p>';
+                return;
+            }
+
+            originalStrings.forEach((original, index) => {
+                const item = document.createElement('div');
+                item.className = 'string-item';
+                item.innerHTML = `
+                    <label>Původní text #${index + 1}:</label>
+                    <div class="original">"${original}"</div>
+                    <label>Nový text:</label>
+                    <input type="text" class="string-edit" data-index="${index}" value="${original}" />
+                `;
+                container.appendChild(item);
+            });
+
+            document.querySelectorAll('.string-edit').forEach((input, index) => {
+                input.addEventListener('change', function() {
+                    modifiedStrings[index] = this.value;
+                });
+            });
+        }
+
+        function applyChanges() {
+            if (originalStrings.length === 0) {
+                showMessage('Nejdříve najdi stringy!', 'error');
+                return;
+            }
+
+            let result = processedCode;
+            
+            const regex = /"(?:\\.|[^"\\])*"/g;
+            let match;
+            let replacements = [];
+            
+            while ((match = regex.exec(processedCode)) !== null) {
+                replacements.push({
+                    original: match[0],
+                    index: match.index
+                });
+            }
+
+            for (let i = replacements.length - 1; i >= 0; i--) {
+                if (i < modifiedStrings.length) {
+                    const replacement = `"${modifiedStrings[i].replace(/"/g, '\\"')}"`;
+                    result = result.substring(0, replacements[i].index) + 
+                             replacement + 
+                             result.substring(replacements[i].index + replacements[i].original.length);
+                }
+            }
+
+            document.getElementById('originalCode').value = result;
+            processedCode = result;
+            showMessage('✅ Změny aplikovány! Nyní si kód stáhni.', 'success');
+        }
+
+        function downloadCode() {
+            const code = document.getElementById('originalCode').value;
+            
+            if (!code.trim()) {
+                showMessage('Nemáš co stahovat!', 'error');
+                return;
+            }
+
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(code));
+            element.setAttribute('download', 'edited_code.txt');
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+
+            showMessage('✅ Soubor stáhnut! (edited_code.txt)', 'success');
+        }
+
+        function resetAll() {
+            document.getElementById('originalCode').value = '';
+            document.getElementById('stringsList').innerHTML = '';
+            document.getElementById('stringCount').textContent = '0';
+            document.getElementById('fileInput').value = '';
+            originalStrings = [];
+            modifiedStrings = [];
+            processedCode = '';
+            showMessage('Vše resetováno.', 'info');
+        }
+
+        function showMessage(text, type = 'info') {
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message show ${type}`;
+            setTimeout(() => {
+                msg.classList.remove('show');
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
