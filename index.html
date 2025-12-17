@@ -235,7 +235,48 @@
     </div>
 
     <script>
-        let originalStrings = [];
+        250 = [];
+
+                // Funkce na detekci angličtiny a návrh překladu do češtiny
+        function isEnglishText(text) {
+            // Velmi jednoduchá detekce - zkontroluj společná anglická slova
+            const commonEnglish = ['hello', 'world', 'the', 'and', 'is', 'a', 'to', 'this', 'that', 'with', 'for', 'example', 'program', 'example', 'demonstrating', 'work', 'texts', 'great', 'test', 'user', 'name', 'message', 'status', 'error', 'success', 'warning'];
+            const lowerText = text.toLowerCase();
+            return commonEnglish.some(word => lowerText.includes(word));
+        }
+
+        // Jednoduchý překladové slovník (angličtina -> čeština)
+        const translationDict = {
+            'hello': 'ahoj',
+            'world': 'svět',
+            'hello world': 'ahoj světe',
+            'this is a great example': 'toto je skvělý příklad',
+            'this is a great example': 'toto je skvělý příklad',
+            'program is demonstrating a work with texts': 'program demonstruje práci s texty',
+            'program': 'program',
+            'demonstrating': 'demonstruje',
+            'work': 'práce',
+            'example': 'příklad',
+            'great': 'skvělý',
+            'text': 'text',
+            'user': 'uživatel',
+            'name': 'jméno',
+            'test': 'test',
+            'message': 'zpráva',
+        };
+
+        function translateEnglishToCzech(text) {
+            const lowerText = text.toLowerCase();
+            // Zkus přesný zápas nejdřív
+            if (translationDict[lowerText]) {
+                return translationDict[lowerText];
+            }
+            // Zkus jednotlivá slova
+            let translatedWords = lowerText.split(/\s+/).map(word => {
+                return translationDict[word] || word;
+            });
+            return translatedWords.join(' ');
+        }
         let modifiedStrings = [];
         let processedCode = '';
 
@@ -296,7 +337,7 @@
                     <label>Původní text #${index + 1}:</label>
                     <div class="original">"${original}"</div>
                     <label>Nový text:</label>
-                    <input type="text" class="string-edit" data-index="${index}" value="${original}" />
+                    <input type="text" class="string-edit" data-index="${index}" value="${isEnglishText(original) ? translateEnglishToCzech(original) : original}" />
                 `;
                 container.appendChild(item);
             });
