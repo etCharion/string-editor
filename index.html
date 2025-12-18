@@ -419,6 +419,41 @@
             setTimeout(() => {
                 msg.classList.remove('show');
             }, 4000);
+
+                    // Automatický překlad anglických stringů pomocí MyMemory API
+        async function translateStringsWithMyMemory() {
+            const inputs = document.querySelectorAll('.string-edit');
+            for (let input of inputs) {
+                const originalText = input.value;
+                // Jednoduchá detekce anglických slovů
+                const englishWords = ['hello', 'world', 'function', 'program', 'example', 'great', 'test', 'message', 'user', 'name', 'is', 'the', 'and', 'a', 'to', 'this', 'that'];
+                const isEnglish = englishWords.some(word => originalText.toLowerCase().includes(word));
+                
+                if (isEnglish && originalText.trim()) {
+                    try {
+                        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(originalText)}&langpair=en|cs`);
+                        const data = await response.json();
+                        if (data.responseStatus === 200) {
+                            const translation = data.responseData.translatedText;
+                            input.value = translation;
+                            const index = input.dataset.index;
+                            if (index !== undefined) {
+                                modifiedStrings[index] = translation;
+                            }
+                        }
+                    } catch (error) {
+                        console.log('Překlad se nepodařil pro:', originalText);
+                    }
+                }
+            }
+        }
+        
+        // Zavolej překlad po vykreslení stringů
+        const originalRenderStringsList = renderStringsList;
+        renderStringsList = function() {
+            originalRenderStringsList();
+            setTimeout(translateStringsWithMyMemory, 500);
+        };
         }
     </script>
 </body>
