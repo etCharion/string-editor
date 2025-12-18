@@ -293,9 +293,7 @@
         });
 
         function findStrings(code) {
-            const regex = /"(?:\\.|[^"\\])*"/g;
-            const matches = code.match(regex) || [];
-            return matches.map(match => match.slice(1, -1));
+    const regex = /"(?:\\.|[^"\\])*"/g;            return matches.map(match => match.slice(1, -1));
         }
 
         function processCode() {
@@ -357,7 +355,7 @@
 
             let result = processedCode;
             
-            const regex = /"(?:\\.|[^"\\])*"/g;
+            const regex = /"(?:\.|[^"\])*"/g;"(?:\\.|[^"\\])*"/g;
             let match;
             let replacements = [];
             
